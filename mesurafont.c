@@ -24,7 +24,7 @@ static char *cntdevice = "/dev/spidev0.0";
 //ADC configurations segons manual MCP3008
 #define SINGLE_ENDED_CH0 8
 #define SINGLE_ENDED_CH1 9
-#define SINGLE_ENDED_CH2 10
+#define SINGLE_ENDED_CH2 10	//Entrada analògica que llegirem.
 #define SINGLE_ENDED_CH3 11
 #define SINGLE_ENDED_CH4 12
 #define SINGLE_ENDED_CH5 13
