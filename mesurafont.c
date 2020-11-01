@@ -25,7 +25,7 @@ static char *cntdevice = "/dev/spidev0.0";
 //ADC configurations segons manual MCP3008
 #define SINGLE_ENDED_CH0 8
 #define SINGLE_ENDED_CH1 9
-#define SINGLE_ENDED_CH2 10	//Entrada analògica que llegirem.
+#define SINGLE_ENDED_CH2 10
 #define SINGLE_ENDED_CH3 11
 #define SINGLE_ENDED_CH4 12
 #define SINGLE_ENDED_CH5 13
@@ -50,28 +50,30 @@ static void pabort(const char *s)
 
 // -----------------------------------------------------------------------------------------------
 
-static void spiadc_config_tx(int conf, uint8_t tx[3])
+static void spiadc_config_tx( int conf, uint8_t tx[3] )
 {
 	int i;
 
 	uint8_t tx_dac[3] = { 0x01, 0x00, 0x00 };
 	uint8_t n_tx_dac = 3;
 
-	for (i = 0; i < n_tx_dac; i++)
+	for (i=0; i < n_tx_dac; i++) {
 		tx[i] = tx_dac[i];
-
-
-// Estableix el mode de comunicació en la parta alta del 2n byte
-	tx[1] = conf<<4;
-
-	if (verbose) {
-		for (i = 0; i < n_tx_dac; i++)
-			printf("spi tx dac byte:(%02d)=0x%02x\n", i, tx[i]);
 	}
+	
+// Estableix el mode de comunicació en la parta alta del 2n byte
+	tx[1]=conf<<4;
+	
+	if(verbose){
+		for(i=0; i < n_tx_dac; i++){
+			printf("spi tx dac byte:(%02d)=0x%02x\n",i,tx[i] );
+		}
+	}
+		
 }
 
 // -----------------------------------------------------------------------------------------------
-static int spiadc_transfer(int fd, uint8_t bits, uint32_t speed, uint16_t delay, uint8_t tx[3], uint8_t *rx, int len)
+static int spiadc_transfer(int fd, uint8_t bits, uint32_t speed, uint16_t delay, uint8_t tx[3], uint8_t *rx, int len )
 {
 	int ret, value, i;
 
@@ -86,28 +88,31 @@ static int spiadc_transfer(int fd, uint8_t bits, uint32_t speed, uint16_t delay,
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 
-	if (verbose) {
-		for (i = 0; i < len; i++)
+	if( verbose ) {
+
+		for (i = 0; i < len; i++) {
 			printf("0x%02x ", rx[i]);
+		}
 		value = ((rx[1] & 0x0F) << 8) + rx[2];
 		printf("-->  %d\n", value);
-
+	
 	}
 
 	return ret;
+
 }
 
 
 
 // -----------------------------------------------------------------------------------------------
 
-static int spiadc_config_transfer(int conf, int *value)
+static int spiadc_config_transfer( int conf, int *value )
 {
 	int ret = 0;
 	int fd;
 	uint8_t rx[3];
 	char buffer[255];
-
+	
 	/* SPI parameters */
 	char *device = cntdevice;
 	//uint8_t mode = SPI_CPOL; //No va bé amb aquesta configuació, ha de ser CPHA
@@ -115,18 +120,18 @@ static int spiadc_config_transfer(int conf, int *value)
 	uint8_t bits = 8;
 	uint32_t speed = 500000; //max 1500KHz
 	uint16_t delay = 0;
-
+	
 	/* Transmission buffer */
 	uint8_t tx[3];
 
 	/* open device */
 	fd = open(device, O_RDWR);
 	if (fd < 0) {
-		sprintf(buffer, "can't open device (%s)", device);
-		pabort(buffer);
+		sprintf( buffer, "can't open device (%s)", device );
+		pabort( buffer );
 	}
 
-	/* spi mode */
+	/* spi mode 	 */
 	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
 	if (ret == -1)
 		pabort("can't set spi mode");
@@ -135,7 +140,7 @@ static int spiadc_config_transfer(int conf, int *value)
 	if (ret == -1)
 		pabort("can't get spi mode");
 
-	/* bits per word */
+	/* bits per word 	 */
 	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
 	if (ret == -1)
 		pabort("can't set bits per word");
@@ -155,7 +160,7 @@ static int spiadc_config_transfer(int conf, int *value)
 
 	/* build data to transfer */
 	spiadc_config_tx(conf, tx);
-
+		
 	/* spi adc transfer */
 	ret = spiadc_transfer(fd, bits, speed, delay, tx, rx, 3);
 	if (ret == 1)
@@ -175,13 +180,17 @@ int main(int argc, char *argv[])
 	int ret = 0, value_int;
 	float value_volts;
 
-	ret = spiadc_config_transfer(SINGLE_ENDED_CH2, &value_int);
+	ret = spiadc_config_transfer( SINGLE_ENDED_CH2, &value_int );
 
-	printf("valor llegit (0-1023) %d\n", value_int);
-	value_volts = 3.3*value_int/1023;
+	printf("Valor llegit (0-1023) %d\n", value_int);
+	value_volts=3.3*value_int/1023;
+	
+	printf("Voltatge a la sortida del divisor de tensions: %.3f V\n", value_volts);
 
-	printf("voltatge %.3f V\n", value_volts);
-	printf("Current is %.3f A\n", value_volts / (780+220));
+	float Vfont = (value_volts*(780+220))/220;
+
+	printf("Voltatge de la font: %.3f V\n", Vfont);
+	printf("Intensitat total %.3f mA\n", ((Vfont - value_volts) / 780) * 1000);
 
 	return ret;
 }
