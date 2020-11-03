@@ -1,10 +1,27 @@
 // SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
-/*
- * ADC MC3008 example
+/**
+ * Program @file mesurafont.c
+ * Version   1.3
  *
- * Cross-compile with   arm-linux-gnueabi-gcc nom.c -o nom_executable
+ * @brief Programa de mesures elèctriques, tensió i intensitat per una font de 15V
  *
- * Copyrigth (C) EUSS 2018  ( http://www.euss.cat )
+ * @author Roger Ferré Martínez
+ * @author Xorxe Oural Martínez
+ * 
+ * Copyright (C) 2020
+ *
+ * License GNU/GPL, see COPYING
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses/.
+ *
  */
 
 #include <stdint.h>
@@ -40,7 +57,7 @@ static char *cntdevice = "/dev/spidev0.0";
 #define DIFERENTIAL_CH6_CH7 6 //Chanel CH6 = IN+ CH7 = IN-
 #define DIFERENTIAL_CH7_CH6 7 //Chanel CH6 = IN- CH7 = IN+
 
-// -----------------------------------------------------------------------------------------------
+/** Estableix sortida i error*/
 
 static void pabort(const char *s)
 {
@@ -61,7 +78,7 @@ static void spiadc_config_tx( int conf, uint8_t tx[3] )
 		tx[i] = tx_dac[i];
 	}
 	
-// Estableix el mode de comunicació en la parta alta del 2n byte
+/** Estableix el mode de comunicació en la parta alta del 2n byte*/
 	tx[1]=conf<<4;
 	
 	if(verbose){
@@ -72,7 +89,7 @@ static void spiadc_config_tx( int conf, uint8_t tx[3] )
 		
 }
 
-// -----------------------------------------------------------------------------------------------
+/** Defineix els paràmetres de comunicació*/
 static int spiadc_transfer(int fd, uint8_t bits, uint32_t speed, uint16_t delay, uint8_t tx[3], uint8_t *rx, int len )
 {
 	int ret, value, i;
@@ -113,26 +130,26 @@ static int spiadc_config_transfer( int conf, int *value )
 	uint8_t rx[3];
 	char buffer[255];
 	
-	/* SPI parameters */
+/**Paràmetres SPI*/
+
 	char *device = cntdevice;
-	//uint8_t mode = SPI_CPOL; //No va bé amb aquesta configuació, ha de ser CPHA
-	uint8_t mode = SPI_CPHA;
+	uint8_t mode = SPI_CPHA; 	//No va bé amb aquesta configuació, ha de ser CPHA
 	uint8_t bits = 8;
 	uint32_t speed = 500000; //max 1500KHz
 	uint16_t delay = 0;
 	
-	/* Transmission buffer */
+/**Transmissió al buffer */
 	uint8_t tx[3];
 
-	/* open device */
-	fd = open(device, O_RDWR);
+	
+	fd = open(device, O_RDWR); //obertura del dispositiu
 	if (fd < 0) {
 		sprintf( buffer, "can't open device (%s)", device );
 		pabort( buffer );
 	}
 
-	/* spi mode 	 */
-	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
+
+	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode); //Modo SPI
 	if (ret == -1)
 		pabort("can't set spi mode");
 
@@ -140,8 +157,8 @@ static int spiadc_config_transfer( int conf, int *value )
 	if (ret == -1)
 		pabort("can't get spi mode");
 
-	/* bits per word 	 */
-	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
+
+	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits); //Bits per paraula
 	if (ret == -1)
 		pabort("can't set bits per word");
 
@@ -149,8 +166,8 @@ static int spiadc_config_transfer( int conf, int *value )
 	if (ret == -1)
 		pabort("can't get bits per word");
 
-	/* max speed hz  */
-	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+
+	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed); //Velocitat màxima per Hz
 	if (ret == -1)
 		pabort("can't set max speed hz");
 
@@ -158,11 +175,11 @@ static int spiadc_config_transfer( int conf, int *value )
 	if (ret == -1)
 		pabort("can't get max speed hz");
 
-	/* build data to transfer */
-	spiadc_config_tx(conf, tx);
+
+	spiadc_config_tx(conf, tx); //Construcció de la transferència de dades
 		
-	/* spi adc transfer */
-	ret = spiadc_transfer(fd, bits, speed, delay, tx, rx, 3);
+	 
+	ret = spiadc_transfer(fd, bits, speed, delay, tx, rx, 3); // ADC SPI transferència 
 	if (ret == 1)
 		pabort("can't send spi message");
 
@@ -173,7 +190,7 @@ static int spiadc_config_transfer( int conf, int *value )
 	return ret;
 }
 
-// -----------------------------------------------------------------------------------------------
+/**Presentació de les mesures obtingudes*/
 
 int main(int argc, char *argv[])
 {
