@@ -66,9 +66,79 @@ static char *cntdevice = "/dev/spidev0.0";
 #define DIFERENTIAL_CH6_CH7 6 //Chanel CH6 = IN+ CH7 = IN-
 #define DIFERENTIAL_CH7_CH6 7 //Chanel CH6 = IN- CH7 = IN+
 
+#define EXPORT "/sys/class/gpio/export"
+#define UNEXPORT "/sys/class/gpio/unexport"
+#define LEDYELLOW "/sys/class/gpio/gpio22/value"
+#define D_LEDYELLOW "/sys/class/gpio/gpio22/direction"
+
 int cridarsql(float, float, int, int);
 
 // -----------------------------------------------------------------------------------------------
+
+void led_on(char addr[])
+{
+	int fd;
+	char m[] = "1";
+	fd = open(addr, O_WRONLY);
+	if (fd < 0) {
+		perror("Error a l'obrir el dispositiu\n");
+		exit(-1);
+	}
+	write(fd,m,1);
+	close(fd);
+}
+
+void led_off(char addr[])
+{
+	int fd;
+	char m[] = "0";
+	fd = open(addr, O_WRONLY);
+	if (fd < 0) {
+		perror("Error a l'obrir el dispositiu\n");
+		exit(-1);
+	}
+	write(fd,m,1);
+	close(fd);
+}
+
+void wfv(char addr[], char message[])
+{
+	int fd;
+	fd = open(addr, O_WRONLY);
+	char m_error[200];
+	sprintf(m_error,"Error a l'obrir el dispositiu %s\n",addr);
+	if (fd < 0) {
+		perror(m_error);
+		exit(-1);
+	}
+	write(fd,message,strlen(message));
+	// printf("missatge %s, mida %d\n",message, strlen(message));
+	close(fd);
+}
+
+void setup_gpio ()
+{
+	int fdtest,n=10000;
+	wfv(EXPORT,"22");
+
+	//espera a que s'hagi creat el dispositiu.
+
+	do{
+		n--;
+		fdtest = open(LEDYELLOW, O_WRONLY);
+	} while((n>0) && (fdtest<0));
+
+	printf("---> Export Ok %d %d \n",n, fdtest);
+
+
+	//defineix la direcció de sortida dels LEDs
+	wfv(D_LEDYELLOW,"out");
+}
+
+void free_gpio ()
+{
+	wfv(UNEXPORT,"22");
+}
 
 static void pabort(const char *s)
 {
@@ -367,6 +437,15 @@ int main (int argc, char *argv[])
 		ret = spiadc_config_transfer(SINGLE_ENDED_CH2, &value_int);
 
 		sensor_nom(value_int, id_tensio, id_intensitat);
+
+		setup_gpio();
+		printf("Encenem LED groc.\n")
+		led_on(LEDYELLOW);
+		sleep(1);
+
+		printf("Apaguem LED groc.\n")
+		led_off(LEDYELLOW);
+		free_gpio;
 
 		sleep(2);
 	}
