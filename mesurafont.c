@@ -258,14 +258,6 @@ int sensor_nom(float valor_llegit, int id_tensio, int id_intensitat)
 	float intensitat = ((Vfont - value_volts) / 780) * 1000;
 	printf("Intensitat total %.3f mA\n", intensitat);
 
-	/*wiringPiSetup();
-	pinMode (3, OUTPUT);
-	for(;;){
-		digitalWrite(0, HIGH);
-		delay (500);
-		digitalWrite(0, LOW);
-	}*/
-
 	//cridarsql(id_sensor, id_intensitat, value_volts, intensitat);
 	cridarsql(value_volts, intensitat, id_tensio, id_intensitat);
 	return 0;
@@ -275,8 +267,7 @@ int sensor_nom(float valor_llegit, int id_tensio, int id_intensitat)
 
 
 
-int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat)
-{
+int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) {
     sqlite3 *db;
     char *zErrMsg = 0;
     int rc;
@@ -321,7 +312,7 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat)
 		return 0;
 }
 
-// -----------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------
 
 int main (int argc, char *argv[])
 {
