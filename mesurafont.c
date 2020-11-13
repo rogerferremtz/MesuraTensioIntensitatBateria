@@ -439,11 +439,11 @@ int main (int argc, char *argv[])
 		sensor_nom(value_int, id_tensio, id_intensitat);
 
 		setup_gpio();
-		printf("Encenem LED groc.\n")
+		printf("Encenem LED groc.\n");
 		led_on(LEDYELLOW);
 		sleep(1);
 
-		printf("Apaguem LED groc.\n")
+		printf("Apaguem LED groc.\n");
 		led_off(LEDYELLOW);
 		free_gpio;
 
