@@ -25,11 +25,14 @@
  */
 
 /*
- * ADC MC3008 example
- *
- * Cross-compile with   arm-linux-gnueabi-gcc nom.c -o nom_executable
- *
- * Copyrigth (C) EUSS 2018  ( http://www.euss.cat )
+Makefile:
+
+all:
+	gcc mesurafont.c -lsqlite -o mesurafont
+
+clear:
+	rm -f mesurafont.o
+
  */
 
 #include <stdint.h>
@@ -66,15 +69,32 @@ static char *cntdevice = "/dev/spidev0.0";
 #define DIFERENTIAL_CH6_CH7 6 //Chanel CH6 = IN+ CH7 = IN-
 #define DIFERENTIAL_CH7_CH6 7 //Chanel CH6 = IN- CH7 = IN+
 
+//Defines necessaris per encendre LEDs, més colors al PDF d'eussternet.
 #define EXPORT "/sys/class/gpio/export"
 #define UNEXPORT "/sys/class/gpio/unexport"
-#define LEDYELLOW "/sys/class/gpio/gpio22/value"
-#define D_LEDYELLOW "/sys/class/gpio/gpio22/direction"
+#define LEDYELLOW "/sys/class/gpio/gpio27/value"
+#define D_LEDYELLOW "/sys/class/gpio/gpio27/direction"
 
+/*
+ * #define LEDWHITE "/sys/class/gpio/gpio22/value"
+ * #define LEDRED "/sys/class/gpio/gpio17/value"
+ * #define LEDYELLOW "/sys/class/gpio/gpio27/value"
+ * 
+ * #define D_LEDWHITE "/sys/class/gpio/gpio22/direction"
+ * #define D_LEDRED "/sys/class/gpio/gpio17/direction"
+ * #define D_LEDYELLOW "/sys/class/gpio/gpio27/direction"
+ */
+
+
+
+//Prototipus funcions.
 int cridarsql(float, float, int, int);
 
 // -----------------------------------------------------------------------------------------------
 
+
+
+//Funció per encendre el LED.
 void led_on(char addr[])
 {
 	int fd;
@@ -88,6 +108,9 @@ void led_on(char addr[])
 	close(fd);
 }
 
+
+
+//Funció per apagar el LED.
 void led_off(char addr[])
 {
 	int fd;
@@ -101,6 +124,9 @@ void led_off(char addr[])
 	close(fd);
 }
 
+
+
+//Posta a punt dels LEDs.
 void wfv(char addr[], char message[])
 {
 	int fd;
@@ -116,13 +142,18 @@ void wfv(char addr[], char message[])
 	close(fd);
 }
 
+
+
+//Posta a punt del canal de comunicació GPIO per comunicar-nos amb el LED.
 void setup_gpio ()
 {
 	int fdtest,n=10000;
-	wfv(EXPORT,"22");
+	wfv(EXPORT,"27");	//Port LED Groc.
+	//wfv(EXPORT,"22");	//Port LED Blanc.
+	//wfv(EXPORT,"17");	//Port LED Vermell.
 
-	//espera a que s'hagi creat el dispositiu.
 
+	//En cas d'haver-hi més LEDs, cal repetir el DO-WHILE tres cops, un per cada LED.
 	do{
 		n--;
 		fdtest = open(LEDYELLOW, O_WRONLY);
@@ -131,14 +162,25 @@ void setup_gpio ()
 	printf("---> Export Ok %d %d \n",n, fdtest);
 
 
-	//defineix la direcció de sortida dels LEDs
+
+
+	//Definim la direcció de sortida dels LEDs
 	wfv(D_LEDYELLOW,"out");
+	//wfv(D_LEDWHITE,"out");
+	//wfv(D_LEDRED,"out");
 }
 
+
+
+//Alliberem el/s canal/s GPIO.
 void free_gpio ()
 {
-	wfv(UNEXPORT,"22");
+	wfv(UNEXPORT,"27");
+	//wfv(UNEXPORT,"22");
+	//wfv(UNEXPORT,"17");
 }
+
+
 
 static void pabort(const char *s)
 {
@@ -146,6 +188,9 @@ static void pabort(const char *s)
 	abort();
 }
 
+
+
+//Aquest Callback ens diu si el sensor de TENSIÓ està registrat.
 static int callback_tensio(void *punter, int argc, char **argv, char **azColName)
 {
 	int i, id = -1;
@@ -162,6 +207,9 @@ static int callback_tensio(void *punter, int argc, char **argv, char **azColName
 	return 0;
 }
 
+
+
+//Aquest Callback ens diu si el sensor d'INTENSITAT està registrat.
 static int callback_intensitat(void *punter, int argc, char **argv, char **azColName)
 {
 	int i, id = -1;
@@ -178,6 +226,9 @@ static int callback_intensitat(void *punter, int argc, char **argv, char **azCol
 	return 0;
 }
 
+
+
+//Aquest callback ens retorna el valor del ID del sensor que li haguem demanat.
 static int callback_id(void *punter, int argc, char **argv, char **azColName)
 {
 	int i, id = -1;
@@ -191,8 +242,13 @@ static int callback_id(void *punter, int argc, char **argv, char **azColName)
 	return 0;
 }
 
-// -----------------------------------------------------------------------------------------------
 
+
+// ---------------------------Configuració del ADC MCP 3008.---------------------------------------
+
+
+
+//
 static void spiadc_config_tx(int conf, uint8_t tx[3])
 {
 	int i;
@@ -213,7 +269,8 @@ static void spiadc_config_tx(int conf, uint8_t tx[3])
 	}
 }
 
-// -----------------------------------------------------------------------------------------------
+
+
 static int spiadc_transfer(int fd, uint8_t bits, uint32_t speed, uint16_t delay, uint8_t tx[3], uint8_t *rx, int len)
 {
 	int ret, i;
@@ -240,7 +297,7 @@ static int spiadc_transfer(int fd, uint8_t bits, uint32_t speed, uint16_t delay,
 	return ret;
 }
 
-// -----------------------------------------------------------------------------------------------
+
 
 static int spiadc_config_transfer(int conf, int *value)
 {
@@ -309,8 +366,15 @@ static int spiadc_config_transfer(int conf, int *value)
 	return ret;
 }
 
+
+
 // -----------------------------------------------------------------------------------------------
 
+
+
+//Funció encarregada de llegir el valor que proporciona el ADC. Aquesta funció s'executa un cop co-
+//neixem el ID del sensor. La funció al final crida a una altra funció encarregada d'introduïr els 
+//valors dels sensors a la base de dades.
 int sensor_nom(float valor_llegit, int id_tensio, int id_intensitat)
 {
 	float value_volts;
@@ -333,10 +397,9 @@ int sensor_nom(float valor_llegit, int id_tensio, int id_intensitat)
 	return 0;
 }
 
-// -----------------------------------------------------------------------------------------------
 
 
-
+//Funció encarregada d'introduïr els valors dels sensors a la base de dades.
 int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) {
     sqlite3 *db;
     char *zErrMsg = 0;
@@ -349,6 +412,8 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) 
 		  return 1;
 	}
 
+
+	//Introduïm el valor de tensió.
 	char sql_tensio[1024];
 
 	sprintf(sql_tensio, "INSERT INTO mesures (id_sensor, valor) VALUES (%d, %f);", id_tensio, tensio);
@@ -364,6 +429,8 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) 
 		return 1;
 	}
 
+
+	//Introduïm el valor d'intensitat.
 	char sql_intensitat[1024];
 
 	sprintf(sql_intensitat, "INSERT INTO mesures (id_sensor, valor) VALUES (%d, %f);", id_intensitat, intensitat);
@@ -382,8 +449,13 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) 
 		return 0;
 }
 
-// ----------------------------------------------------------------------------------------------
 
+
+
+//Funció main, la primera part d'aquesta s'encarrega de revisar que els sensors estiguin registrats a la
+//base de dades, en cas que no ho siguin, els registra. Un cop registrats demana el seu ID. La segona part
+//executa el bucle en el qual cridem a la funció que configura el ADC, cridem a la funció de llegeis els 
+//valors dels sensors, i finalment encenem i apaguem el LED.
 int main (int argc, char *argv[])
 {
 	int ret = 0, value_int;
@@ -404,6 +476,10 @@ int main (int argc, char *argv[])
 	char checksensorintensitat[1024] = "SELECT EXISTS (SELECT id_sensor FROM sensors WHERE nom_sensor = 'Sensor_Intensitat');";
 	char demanar_id_tensio[1024] = "SELECT id_sensor FROM sensors WHERE nom_sensor = 'Sensor_Tensio';";
 	char demanar_id_intensitat[1024] = "SELECT id_sensor FROM sensors WHERE nom_sensor = 'Sensor_Intensitat';";
+
+
+
+
 
 	rc = sqlite3_exec(db, checksensortensio, callback_tensio, 0, &zErrMsg);
 	if (rc != SQLITE_OK) {
@@ -439,11 +515,11 @@ int main (int argc, char *argv[])
 		sensor_nom(value_int, id_tensio, id_intensitat);
 
 		setup_gpio();
-		printf("Encenem LED groc.\n");
+		printf("Encenem LED groc.\n")
 		led_on(LEDYELLOW);
 		sleep(1);
 
-		printf("Apaguem LED groc.\n");
+		printf("Apaguem LED groc.\n")
 		led_off(LEDYELLOW);
 		free_gpio;
 
