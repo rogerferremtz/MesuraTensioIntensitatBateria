@@ -42,6 +42,8 @@
 #include <sys/time.h>
 #include <stdio.h>
 
+#include "func.h"
+
 
 int verbose = 1;
 static char *cntdevice = "/dev/spidev0.0";
@@ -433,6 +435,45 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) 
 	}
 
 
+
+
+
+	char cadena_URI[1024];
+	//char nom_servidor[32] = "84.88.55.9";
+	char nom_servidor[32] = "iotlab.euss.cat";
+
+	int hores, minuts, segons, dia, mes, any;
+
+	time_t ara;
+
+	//Obte l'hora actual
+
+	time(&ara);
+
+	struct tm *local = localtime(&ara);
+
+	hores = local->tm_hour;
+	minuts = local->tm_min;
+	segons = local->tm_sec;
+
+	dia = local->tm_mday;
+	mes = local->tm_mon + 1;
+	any = local->tm_year + 1900;
+
+
+	if (hores < 12) //Ante Meridiem.
+		printf("Ara son les : %02d:%02d:%02d am\n", hores, minuts, segons);
+
+	else  //Post Meridiem.
+		printf("Ara son les : %02d:%02d:%02d pm\n", hores - 12, minuts, segons);
+
+	//Mostra la data.
+	//printf("Avui estem a : %02d/%02d/%d\n", dia, mes, any);
+
+
+
+
+
 	//Introduïm el valor de tensió.
 	char sql_tensio[1024];
 
@@ -441,6 +482,14 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) 
 	printf("SQLITE3: %s\n", sql_tensio);
 
 	rc = sqlite3_exec(db, sql_tensio, 0, 0, &zErrMsg);
+
+
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", tensio, any, mes, dia, hores, minuts, segons);
+
+	http_get(nom_servidor, cadena_URI);
+
+
+
 
 	if (rc != SQLITE_OK) {
 		fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -458,6 +507,15 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) 
 	printf("SQLITE3: %s\n\n", sql_intensitat);
 
 	rc = sqlite3_exec(db, sql_intensitat, 0, 0, &zErrMsg);
+
+
+
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", intensitat, any, mes, dia, hores, minuts, segons);
+
+	http_get(nom_servidor, cadena_URI);
+
+
+
 
 	if (rc != SQLITE_OK) {
 		fprintf(stderr, "SQL error: %s\n", zErrMsg);
