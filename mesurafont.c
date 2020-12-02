@@ -76,7 +76,7 @@ static char *cntdevice = "/dev/spidev0.0";
  * #define LEDWHITE "/sys/class/gpio/gpio22/value"
  * #define LEDRED "/sys/class/gpio/gpio17/value"
  * #define LEDYELLOW "/sys/class/gpio/gpio27/value"
- * 
+ *
  * #define D_LEDWHITE "/sys/class/gpio/gpio22/direction"
  * #define D_LEDRED "/sys/class/gpio/gpio17/direction"
  * #define D_LEDYELLOW "/sys/class/gpio/gpio27/direction"
@@ -85,32 +85,32 @@ static char *cntdevice = "/dev/spidev0.0";
 
 
 //Prototipus funcions.
-int cridarsql(float, float, int, int);
+int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat);
 typedef void (timer_callback) (union sigval);
 
 // -----------------------------------------------------------------------------------------------
 
 
-int set_timer(timer_t * timer_id, float delay, float interval, timer_callback * func, int * data) 
+int set_timer(timer_t *timer_id, float delay, float interval, timer_callback *func, int *data)
 {
-    int status =0;
-    struct itimerspec ts;
-    struct sigevent se;
+	int status = 0;
+	struct itimerspec ts;
+	struct sigevent se;
 
-    se.sigev_notify = SIGEV_THREAD;
-    se.sigev_value.sival_ptr = data;
-    se.sigev_notify_function = func;
-    se.sigev_notify_attributes = NULL;
+	se.sigev_notify = SIGEV_THREAD;
+	se.sigev_value.sival_ptr = data;
+	se.sigev_notify_function = func;
+	se.sigev_notify_attributes = NULL;
 
-    status = timer_create(CLOCK_REALTIME, &se, timer_id);
+	status = timer_create(CLOCK_REALTIME, &se, timer_id);
 
-    ts.it_value.tv_sec = abs(delay);
-    ts.it_value.tv_nsec = (delay-abs(delay)) * 1e09;
-    ts.it_interval.tv_sec = abs(interval);
-    ts.it_interval.tv_nsec = (interval-abs(interval)) * 1e09;
+	ts.it_value.tv_sec = abs(delay);
+	ts.it_value.tv_nsec = (delay-abs(delay)) * 1e09;
+	ts.it_interval.tv_sec = abs(interval);
+	ts.it_interval.tv_nsec = (interval-abs(interval)) * 1e09;
 
-    status = timer_settime(*timer_id, 0, &ts, 0);
-    return 0;
+	status = timer_settime(*timer_id, 0, &ts, 0);
+	return 0;
 }
 
 
@@ -119,12 +119,13 @@ void led_on(char addr[])
 {
 	int fd;
 	char m[] = "1";
+
 	fd = open(addr, O_WRONLY);
 	if (fd < 0) {
 		perror("Error a l'obrir el dispositiu\n");
 		exit(-1);
 	}
-	write(fd,m,1);
+	write(fd, m, 1);
 	close(fd);
 }
 
@@ -135,12 +136,13 @@ void led_off(char addr[])
 {
 	int fd;
 	char m[] = "0";
+
 	fd = open(addr, O_WRONLY);
 	if (fd < 0) {
 		perror("Error a l'obrir el dispositiu\n");
 		exit(-1);
 	}
-	write(fd,m,1);
+	write(fd, m, 1);
 	close(fd);
 }
 
@@ -150,14 +152,16 @@ void led_off(char addr[])
 void wfv(char addr[], char message[])
 {
 	int fd;
+
 	fd = open(addr, O_WRONLY);
 	char m_error[200];
-	sprintf(m_error,"Error a l'obrir el dispositiu %s\n",addr);
+
+	sprintf(m_error, "Error a l'obrir el dispositiu %s\n", addr);
 	if (fd < 0) {
 		perror(m_error);
 		exit(-1);
 	}
-	write(fd,message,strlen(message));
+	write(fd, message, strlen(message));
 	// printf("missatge %s, mida %d\n",message, strlen(message));
 	close(fd);
 }
@@ -165,39 +169,40 @@ void wfv(char addr[], char message[])
 
 
 //Posta a punt del canal de comunicació GPIO per comunicar-nos amb el LED.
-void setup_gpio ()
+void setup_gpio(void)
 {
-	int fdtest,n=10000;
-	wfv(EXPORT,"27");	//Port LED Groc.
-	//wfv(EXPORT,"22");	//Port LED Blanc.
-	//wfv(EXPORT,"17");	//Port LED Vermell.
+	int fdtest, n = 10000;
+
+	wfv(EXPORT, "27");	//Port LED Groc.
+	//wfv(EXPORT, "22");	//Port LED Blanc.
+	//wfv(EXPORT, "17");	//Port LED Vermell.
 
 
 	//En cas d'haver-hi més LEDs, cal repetir el DO-WHILE tres cops, un per cada LED.
-	do{
+	do {
 		n--;
 		fdtest = open(LEDYELLOW, O_WRONLY);
-	} while((n>0) && (fdtest<0));
+	} while ((n > 0) && (fdtest < 0));
 
-	printf("---> Export Ok %d %d \n",n, fdtest);
+	printf("---> Export Ok %d %d\n", n, fdtest);
 
 
 
 
 	//Definim la direcció de sortida dels LEDs
-	wfv(D_LEDYELLOW,"out");
-	//wfv(D_LEDWHITE,"out");
-	//wfv(D_LEDRED,"out");
+	wfv(D_LEDYELLOW, "out");
+	//wfv(D_LEDWHITE, "out");
+	//wfv(D_LEDRED, "out");
 }
 
 
 
 //Alliberem el/s canal/s GPIO.
-void free_gpio ()
+void free_gpio(void)
 {
-	wfv(UNEXPORT,"27");
-	//wfv(UNEXPORT,"22");
-	//wfv(UNEXPORT,"17");
+	wfv(UNEXPORT, "27");
+	//wfv(UNEXPORT, "22");
+	//wfv(UNEXPORT, "17");
 }
 
 
@@ -242,8 +247,7 @@ static int callback_intensitat(void *punter, int argc, char **argv, char **azCol
 		return 1;
 	else
 		printf("Sensor Intensitat REGISTRAT\n");
-
-	return 0;
+		return 0;
 }
 
 
@@ -278,16 +282,16 @@ static void spiadc_config_tx(int conf, uint8_t tx[3])
 	uint8_t tx_dac[3] = {0x01, 0x00, 0x00};
 	uint8_t n_tx_dac = 3;
 
-	for (i = 0; i < n_tx_dac; i++) {
+	for (i = 0; i < n_tx_dac; i++)
 		tx[i] = tx_dac[i];
-	}
+
 
 // Estableix el mode de comunicació en la parta alta del 2n byte
 	tx[1] = conf << 4;
 	if (verbose) {
-		for (i = 0; i < n_tx_dac; i++) {
-			//printf("spi tx dac byte:(%02d)=0x%02x\n",i,tx[i] );
-		}
+		for (i = 0; i < n_tx_dac; i++)
+			printf("spi tx dac byte:(%02d)=0x%02x\n", i, tx[i]);
+
 	}
 }
 
@@ -310,9 +314,9 @@ static int spiadc_transfer(int fd, uint8_t bits, uint32_t speed, uint16_t delay,
 
 	if (verbose) {
 
-		for (i = 0; i < len; i++) {
-			//printf("0x%02x ", rx[i]);
-		}
+		for (i = 0; i < len; i++)
+			printf("0x%02x ", rx[i]);
+
 		//value = ((rx[1] & 0x0F) << 8) + rx[2];
 		//printf("-->  %d\n", value);
 	}
@@ -395,7 +399,7 @@ static int spiadc_config_transfer(int conf, int *value)
 
 
 //Funció encarregada de llegir el valor que proporciona el ADC. Aquesta funció s'executa un cop co-
-//neixem el ID del sensor. La funció al final crida a una altra funció encarregada d'introduïr els 
+//neixem el ID del sensor. La funció al final crida a una altra funció encarregada d'introduïr els
 //valors dels sensors a la base de dades.
 int sensor_nom(float valor_llegit, int id_tensio, int id_intensitat)
 {
@@ -412,6 +416,7 @@ int sensor_nom(float valor_llegit, int id_tensio, int id_intensitat)
 	printf("Voltatge de la font: %.3f V\n", Vfont);
 
 	float intensitat = ((Vfont - value_volts) / 780) * 1000;
+
 	printf("Intensitat total %.3f mA\n", intensitat);
 
 	//cridarsql(id_sensor, id_intensitat, value_volts, intensitat);
@@ -422,16 +427,17 @@ int sensor_nom(float valor_llegit, int id_tensio, int id_intensitat)
 
 
 //Funció encarregada d'introduïr els valors dels sensors a la base de dades.
-int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) {
-    sqlite3 *db;
-    char *zErrMsg = 0;
-    int rc;
+int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat)
+{
+	sqlite3 *db;
+	char *zErrMsg = 0;
+	int rc;
 
 	rc = sqlite3_open("basedades_adstr.db", &db);
 
 	if (rc != SQLITE_OK) {
-		  fprintf(stderr, "Cannot open database.\n");
-		  return 1;
+		fprintf(stderr, "Cannot open database.\n");
+		return 1;
 	}
 
 
@@ -536,7 +542,7 @@ void callback(union sigval si)
 	float value_int;
 	int ret = 0;
 
-	int * msg = (int *) si.sival_ptr;
+	int *msg = (int *) si.sival_ptr;
 
 	int id_tensio = msg[0];
 	int id_intensitat = msg[1];
@@ -559,9 +565,9 @@ void callback(union sigval si)
 
 //Funció main, la primera part d'aquesta s'encarrega de revisar que els sensors estiguin registrats a la
 //base de dades, en cas que no ho siguin, els registra. Un cop registrats demana el seu ID. La segona part
-//executa el bucle en el qual cridem a la funció que configura el ADC, cridem a la funció de llegeis els 
+//executa el bucle en el qual cridem a la funció que configura el ADC, cridem a la funció de llegeis els
 //valors dels sensors, i finalment encenem i apaguem el LED.
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	//int ret = 0, value_int;
 
@@ -573,8 +579,8 @@ int main (int argc, char *argv[])
 	rc = sqlite3_open("basedades_adstr.db", &db);
 
 	if (rc != SQLITE_OK) {
-		  fprintf(stderr, "Cannot open database.\n");
-		  return 1;
+		fprintf(stderr, "Cannot open database.\n");
+		return 1;
 	}
 
 	char checksensortensio[1024] = "SELECT EXISTS (SELECT id_sensor FROM sensors WHERE nom_sensor = 'Sensor_Tensio');";
@@ -612,31 +618,16 @@ int main (int argc, char *argv[])
 
 
 	int ids[2];
+
 	ids[0] = id_tensio;
 	ids[1] = id_intensitat;
 
 
 	timer_t tick;
-	set_timer(&tick, 3, 5, callback, (int *) ids );
+
+	set_timer(&tick, 3, 5, callback, (int *) ids);
 	getchar();
 
-
-	/*while (1) {
-		ret = spiadc_config_transfer(SINGLE_ENDED_CH2, &value_int);
-
-		sensor_nom(value_int, id_tensio, id_intensitat);
-
-		setup_gpio();
-		printf("Encenem LED groc.\n")
-		led_on(LEDYELLOW);
-		sleep(1);
-
-		printf("Apaguem LED groc.\n")
-		led_off(LEDYELLOW);
-		free_gpio;
-
-		sleep(2);
-	}*/
 
 
 	return 0;
