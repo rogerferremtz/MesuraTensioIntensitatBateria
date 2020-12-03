@@ -16,7 +16,7 @@ mesurafont.o:
 	$(CC) -c -o mesurafont.o mesurafont.c -l.
 	$(CC) -o mesurafont mesurafont.o -lsqlite3 -lrt -lpthread  -L. -lfunc
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/pi/Desktop/GIT/MesuraTensioIntensitatBateria
-	./mesurafont -s iotlab.euss.cat -d /home/pi/Desktop/GIT/MesuraTensioIntensitatBateria/basedades_adstr.db
+	./mesurafont -s iotlab.euss.es -d /home/pi/Desktop/GIT/MesuraTensioIntensitatBateria/basedades_adstr.db
 
 clean:
 	rm *.o
