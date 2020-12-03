@@ -4,7 +4,7 @@
 CC = gcc
 OBJECTS = func.o libfunc.so
 
-all: $(OBJECTS) orientacio.o
+all: $(OBJECTS) mesurafont.o
 
 func.o:
 	$(CC) -fPIC -c -o func.o func.c
@@ -12,7 +12,7 @@ func.o:
 libfunc.so:
 	$(CC) -shared -fPIC -o libfunc.so func.o
 
-orientacio.o:
+mesurafont.o:
 	$(CC) -c -o mesurafont.o mesurafont.c -l.
 	$(CC) -o mesurafont mesurafont.o -lsqlite3 -lrt -lpthread  -L. -lfunc
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/pi/Desktop/GIT/MesuraTensioIntensitatBateria
