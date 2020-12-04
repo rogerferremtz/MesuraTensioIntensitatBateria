@@ -404,7 +404,7 @@ static int spiadc_config_transfer(int conf, int *value)
 //Funció encarregada de llegir el valor que proporciona el ADC. Aquesta funció s'executa un cop co-
 //neixem el ID del sensor. La funció al final crida a una altra funció encarregada d'introduïr els 
 //valors dels sensors a la base de dades.
-int sensor_nom(float valor_llegit, int id_tensio, int id_intensitat)
+int sensor_nom(int valor_llegit, int id_tensio, int id_intensitat)
 {
 	float value_volts;
 
@@ -491,7 +491,7 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) 
 	rc = sqlite3_exec(db, sql_tensio, 0, 0, &zErrMsg);
 
 
-	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=64&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", tensio, any, mes, dia, hores, minuts, segons);
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", tensio, any, mes, dia, hores, minuts, segons);
 
 	http_get(nom_servidor, cadena_URI);
 
@@ -517,7 +517,7 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) 
 
 
 
-	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=65&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", intensitat, any, mes, dia, hores, minuts, segons);
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", intensitat, any, mes, dia, hores, minuts, segons);
 
 	http_get(nom_servidor, cadena_URI);
 
@@ -540,7 +540,7 @@ int cridarsql(float tensio, float intensitat, int id_tensio, int id_intensitat) 
 
 void callback(union sigval si)
 {
-	float value_int;
+	int value_int;
 	int ret = 0;
 
 	int * msg = (int *) si.sival_ptr;
@@ -595,7 +595,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	printf("\n\nDirectori: %s, Servidor: %s.\n\n", directori_basedades, nom_servidor);
+	printf("Directori: %s, Servidor: %s.\n", directori_basedades, nom_servidor);
 
 
 	sqlite3 *db;
